@@ -21,6 +21,8 @@ const char *green = "\e[92m";
 const char *red = "\e[31m";
 const char *white = "\e[39m";
 
+// TODO: ADD A LIST FOR EACH CATEGORY
+
 // main task class
 class Task {
  public:
@@ -60,8 +62,11 @@ void dumpTasks(list<Task> listOfTasks);
 int main(int argc, char *argv[]) {
   list<Task> testList;
   importFromDB(testList, PATH);
-
-  if (!strcmp(argv[1], "-s")) {
+  // TODO: Fix segmen.fault when no args given
+  if (argc < 1) {
+    cout << red << "No arguments provided. See stl -h" << endl;
+    _Exit(1);
+  } else if (!strcmp(argv[1], "-s")) {
     showTasks(testList);
   }
 
@@ -132,6 +137,8 @@ void removeTask(list<Task> &listOfTasks, int index, bool all) {
 
 // shows tasks with colorcoding according to priority
 void showTasks(list<Task> listOfTasks) {
+  // listOfTasks.sort([](Task lh, Task rh) { return lh.category < rh.category;
+  // });
   cout << endl
        << white << "You have " << listOfTasks.size() << " tasks to do:" << endl;
   for (it = listOfTasks.begin(); it != listOfTasks.end(); it++) {
@@ -165,8 +172,7 @@ void importFromDB(list<Task> &listOfTasks, string path) {
   }
   // normal procedure
   else if (DB.is_open()) {
-    string line;
-    string temp;
+    string line, temp;
     // loop over lines in file
     while (getline(DB, line)) {
       int i = 0, prio;
