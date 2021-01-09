@@ -39,9 +39,13 @@ int main(void) {
     printf("SIZE:%d\nEG: 1. %s\n", task_array_size, TASK(1).task_name);
 #endif
     printTasks(task_array, &task_array_size);
+    //mem stuff
+    free(task_array);
+    fclose(db);
   } else {
     printf("Error! Check if DB-File exists\n");
   }
+  return 0;
 }
 
 // load database into memmory
