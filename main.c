@@ -2,166 +2,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "stl.h"
 
-// macro helpers
-#define TASK(i) task_array[i]
-#define _STRINGIFY(s) #s
-#define STRINGIFY(s) _STRINGIFY(s)
-
-// text effects
-#define WHITE fputs("\e[39m", stdout)
-#define GREEN fputs("\e[92m", stdout)
-#define RED fputs("\e[31m", stdout)
-#define RST fputs("\e[0m", stdout)
-#define FAT fputs("\e[1m", stdout)
-//#define DEBUG
-
-typedef enum { low, medium, high } priority_t;
-typedef struct {
-  char task_name[255];
-  char category[255];
-  priority_t prio;
-  unsigned int done;
-} Task_t;
-
-// prototypes -> put this in header later
-Task_t* loadDB(FILE* dbptr, int* task_array_size);
-char* getDBPath(void);
-int exportDB(FILE* dbptr, Task_t* task_array, int task_array_size);
-int printTasks(Task_t* task_array, int task_array_size);
-void taskPrinter(Task_t* task_array, int i);
 
 int main(void) {
   // STUFF FOR TESTING, NOT FINAL
   int task_array_size = 0;
-  FILE* db = fopen("tasks.db", "r");
-  printf("%s\n", getDBPath());
-  if (db != NULL) {
-    Task_t* task_array = loadDB(db, &task_array_size);
-    printTasks(task_array, task_array_size);
-    // exportDB(db, task_array, task_array_size);
-    // mem stuff
-    free(task_array);
-    fclose(db);
-  } else {
-    printf("Error! Check if DB-File exists\n");
-  }
-  return 0;
-}
-
-// for general implementation, unused atm
-char* getDBPath(void) { return strcat(getenv("HOME"), "/.cahe/tasks.db"); }
-
-// load database into memmory
-Task_t* loadDB(FILE* dbptr, int* task_array_size) {
-  // catch db error
-  if (dbptr == NULL) {
-    return NULL;
-  } else {
-    // read vars
-    char temp_task_name[255];
-    char temp_category[255];
-    unsigned int temp_priority;
-    unsigned int temp_done;
-    // other vars
-    int cnt = 0;
-
-    Task_t* task_array = (Task_t*)malloc(sizeof(Task_t));
-#ifdef DEBUG
-    RED;
-    fputs("Reading database to task_ptr\n", stdout);
-    printf("task_ptr: %p\n", task_array);
-    RST;
-#endif
-    // main read loop
-    while (fscanf(dbptr, "%[^:]:%[^:]:%d:%u\n", temp_task_name, temp_category,
-                  &temp_priority, &temp_done) != EOF) {
-      // expand mem
-      task_array = (Task_t*)realloc(task_array, (cnt + 1) * sizeof(Task_t));
-
-      // copy data into mem
-      strcpy(task_array[cnt].task_name, temp_task_name);
-      strcpy(task_array[cnt].category, temp_category);
-      task_array[cnt].prio = temp_priority;
-      task_array[cnt].done = temp_done;
-#ifdef DEBUG
-      RED;
-      printf("TASK FOUND: %s:%s:%d:%d\n", TASK(cnt).task_name,
-             TASK(cnt).category, TASK(cnt).prio, TASK(cnt).done);
-      RST;
-#endif
-      cnt++;
-    }
-    *task_array_size = cnt;
-    return task_array;
-  }
-}
-
-// export all task_array to database, file has to be reopened or rewound
-int exportDB(FILE* dbptr, Task_t* task_array, int task_array_size) {
+  char* path = getDBPath();
 #ifdef DEBUG
   RED;
-  fputs("Exporting tasks to database:", stdout);
-  printf("Tasknum: %d, task_ptr_addr: %p", task_array_size, task_array);
-  RST;
+  printf("DB_PATH:%s\n", path);
+  REST;
 #endif
-  if (dbptr != NULL) {
-    for (int i = 0; i < task_array_size; i++) {
-      fprintf(dbptr, "%s:%s:%d:%u\n", TASK(i).task_name, TASK(i).category,
-              TASK(i).prio, TASK(i).done);
-    }
-    return 0;
-  } else {
-    return 1;
-  }
-}
-// print colorcoded taskname
-void taskPrinter(Task_t* task_array, int i) {
-  // check piro
-  switch (TASK(i).prio) {
-    case 0:
-      WHITE;
-      printf("%s\n", TASK(i).task_name);
-      RST;
-      break;
-    case 1:
-      GREEN;
-      printf("%s\n", TASK(i).task_name);
-      RST;
-      break;
-    case 2:
-      RED;
-      printf("%s\n", TASK(i).task_name);
-      RST;
-      break;
-    default:
-      WHITE;
-      printf("%s\n", TASK(i).task_name);
-      RST;
-      break;
-  }
-}
+  FILE* db = fopen(path, "r");
 
-// print all tasks
-int printTasks(Task_t* task_array, int task_array_size) {
-  FAT;
-  fputs("ALL TASKS:\n", stdout);
-  RST;
-  // loop over loaded tasklist
-  for (int i = 0; i < task_array_size; i++) {
-    if (!i) {
-      // first element
-      printf("┌ ");
-      taskPrinter(task_array, i);
-    } else if (i + 1 == task_array_size) {
-      // last element
-      printf("└ ");
-      taskPrinter(task_array, i);
-    } else {
-      // elements in between
-      printf("├ ");
-      taskPrinter(task_array, i);
-    }
+  if (db != NULL) {
+    // open and read
+    Task_t* task_array = loadDB(db, &task_array_size);
+    printTasks(task_array, task_array_size, "");
+    fclose(db);
+
+    // write and close
+    db = fopen(path, "w");
+    exportDB(db, task_array, task_array_size);
+    // mem stuff
+    fclose(db);
+    free(task_array);
+  } else {
+    printf("Error! Check if DB-File exists\n");
   }
   return 0;
 }
