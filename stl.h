@@ -30,6 +30,7 @@ Task_t* loadDB(FILE* dbptr, int* task_array_size);
 char* getDBPath(void);
 int exportDB(FILE* dbptr, Task_t* task_array, int task_array_size);
 int printTasks(Task_t* task_array, int task_array_size, char* category);
+int addTask(Task_t * task_array, int *task_array_size, char* task_name, char* category, priority_t pro, unsigned int done);
 void taskPrinter(Task_t* task_array, int i);
 
 #endif

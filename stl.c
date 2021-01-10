@@ -1,5 +1,8 @@
 #include "stl.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 char* getDBPath(void) { return strcat(getenv("HOME"), "/.cache/tasks.db"); }
 
 // load database into memmory
@@ -67,7 +70,7 @@ int exportDB(FILE* dbptr, Task_t* task_array, int task_array_size) {
 }
 // print colorcoded taskname
 void taskPrinter(Task_t* task_array, int i) {
-  // check piro
+  // check prio
   switch (TASK(i).prio) {
     case 0:
       WHITE;
@@ -148,5 +151,22 @@ int printTasks(Task_t* task_array, int task_array_size, char* category) {
       }
     }
   }
+  return 0;
+}
+
+// adds a task to the current tasklist
+int addTask(Task_t* task_array, int* task_array_size, char* task_name,
+            char* category, priority_t prio, unsigned int done) {
+  // expand mem
+  task_array =
+      (Task_t*)realloc(task_array, sizeof(task_array) + sizeof(Task_t));
+  //update array size
+  (*task_array_size)++;
+  //add new task
+  int i = *task_array_size - 1;
+  strcpy(TASK(i).task_name, task_name);
+  strcpy(TASK(i).category, category);
+  TASK(i).prio = prio;
+  TASK(i).done = done;
   return 0;
 }
