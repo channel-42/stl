@@ -24,22 +24,23 @@ typedef struct {
   unsigned int done;
 } Task_t;
 
-// prototypes
+// prototypes -> put this in header later
 Task_t* loadDB(FILE* dbptr, int* task_array_size);
-int printTasks(Task_t* task_array, int* task_array_size);
+char* getDBPath(void);
+int exportDB(FILE* dbptr, Task_t* task_array, int task_array_size);
+int printTasks(Task_t* task_array, int task_array_size);
 void taskPrinter(Task_t* task_array, int i);
 
 int main(void) {
   // STUFF FOR TESTING, NOT FINAL
   int task_array_size = 0;
   FILE* db = fopen("tasks.db", "r");
+  printf("%s\n", getDBPath());
   if (db != NULL) {
     Task_t* task_array = loadDB(db, &task_array_size);
-#ifdef DEBUG
-    printf("SIZE:%d\nEG: 1. %s\n", task_array_size, TASK(1).task_name);
-#endif
-    printTasks(task_array, &task_array_size);
-    //mem stuff
+    printTasks(task_array, task_array_size);
+    // exportDB(db, task_array, task_array_size);
+    // mem stuff
     free(task_array);
     fclose(db);
   } else {
@@ -47,6 +48,9 @@ int main(void) {
   }
   return 0;
 }
+
+// for general implementation, unused atm
+char* getDBPath(void) { return strcat(getenv("HOME"), "/.cahe/tasks.db"); }
 
 // load database into memmory
 Task_t* loadDB(FILE* dbptr, int* task_array_size) {
@@ -63,7 +67,12 @@ Task_t* loadDB(FILE* dbptr, int* task_array_size) {
     int cnt = 0;
 
     Task_t* task_array = (Task_t*)malloc(sizeof(Task_t));
-
+#ifdef DEBUG
+    RED;
+    fputs("Reading database to task_ptr\n", stdout);
+    printf("task_ptr: %p\n", task_array);
+    RST;
+#endif
     // main read loop
     while (fscanf(dbptr, "%[^:]:%[^:]:%d:%u\n", temp_task_name, temp_category,
                   &temp_priority, &temp_done) != EOF) {
@@ -76,8 +85,10 @@ Task_t* loadDB(FILE* dbptr, int* task_array_size) {
       task_array[cnt].prio = temp_priority;
       task_array[cnt].done = temp_done;
 #ifdef DEBUG
-      printf("%s:%s:%d:%d\n", TASK(cnt).task_name, TASK(cnt).category,
-             TASK(cnt).prio, TASK(cnt).done);
+      RED;
+      printf("TASK FOUND: %s:%s:%d:%d\n", TASK(cnt).task_name,
+             TASK(cnt).category, TASK(cnt).prio, TASK(cnt).done);
+      RST;
 #endif
       cnt++;
     }
@@ -86,6 +97,24 @@ Task_t* loadDB(FILE* dbptr, int* task_array_size) {
   }
 }
 
+// export all task_array to database, file has to be reopened or rewound
+int exportDB(FILE* dbptr, Task_t* task_array, int task_array_size) {
+#ifdef DEBUG
+  RED;
+  fputs("Exporting tasks to database:", stdout);
+  printf("Tasknum: %d, task_ptr_addr: %p", task_array_size, task_array);
+  RST;
+#endif
+  if (dbptr != NULL) {
+    for (int i = 0; i < task_array_size; i++) {
+      fprintf(dbptr, "%s:%s:%d:%u\n", TASK(i).task_name, TASK(i).category,
+              TASK(i).prio, TASK(i).done);
+    }
+    return 0;
+  } else {
+    return 1;
+  }
+}
 // print colorcoded taskname
 void taskPrinter(Task_t* task_array, int i) {
   // check piro
@@ -114,17 +143,17 @@ void taskPrinter(Task_t* task_array, int i) {
 }
 
 // print all tasks
-int printTasks(Task_t* task_array, int* task_array_size) {
+int printTasks(Task_t* task_array, int task_array_size) {
   FAT;
   fputs("ALL TASKS:\n", stdout);
   RST;
   // loop over loaded tasklist
-  for (int i = 0; i < *task_array_size; i++) {
+  for (int i = 0; i < task_array_size; i++) {
     if (!i) {
       // first element
       printf("┌ ");
       taskPrinter(task_array, i);
-    } else if (i + 1 == *task_array_size) {
+    } else if (i + 1 == task_array_size) {
       // last element
       printf("└ ");
       taskPrinter(task_array, i);
