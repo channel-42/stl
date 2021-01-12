@@ -13,16 +13,56 @@ int main(int argc, char* argv[]) {
 #ifdef DEBUG
   RED;
   printf("DB_PATH:%s\n", path);
+  for (int i = 0; i < argc; i++) {
+    printf("argc: %d -> %s\n", i, argv[i]);
+  }
   RST;
 #endif
   FILE* db = fopen(path, "r");
+
 
   if (db != NULL) {
     // open and read
     Task_t* task_array = loadDB(db, &task_array_size);
     fclose(db);
-    //addTask(task_array, &task_array_size, "newPEP", "bongo", 0, 0);
-    printTasks(task_array, task_array_size, "");
+    if (argc == 2) {
+      char temp_name[255];
+      char temp_category[255];
+      int temp_prio;
+      char command = *(argv[1] + 1);
+      switch (command) {
+        // list command all cats
+        case 'l':
+          printTasks(task_array, task_array_size, "");
+          break;
+        // add command
+        case 'a':
+          fputs("task name: ", stdout);
+          scanf("%s", temp_name);
+          fputs("category: ", stdout);
+          scanf("%s", temp_category);
+          fputs("priority (0-2): ", stdout);
+          scanf("%d", &temp_prio);
+          // add task
+          addTask(task_array, &task_array_size, temp_name, temp_category,
+                  temp_prio, 0);
+          fputs("\nnew task added!\n", stdout);
+          break;
+      }
+    } else if (argc == 3) {
+      char command = *(argv[1] + 1);
+      switch (command) {
+        // list command for specific category
+        case 'l':
+          printTasks(task_array, task_array_size, argv[2]);
+          break;
+        // add task command
+        case 'a':
+          break;
+      }
+    }
+    // addTask(task_array, &task_array_size, "newPEP", "bongo", 0, 0);
+    // printTasks(task_array, task_array_size, "");
     // write and close
     db = fopen(path, "w");
     exportDB(db, task_array, task_array_size);
