@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 
 char *getDBPath(void) { return strcat(getenv("HOME"), "/.cache/tasks.db"); }
 
@@ -116,19 +116,26 @@ int printTasks(Task_t *task_array, int task_array_size, char *category) {
     FAT;
     fputs("all tasks:\n", stdout);
     RST;
-    for (int i = 0; i < task_array_size; i++) {
-      if (!i) {
-        // first element
-        printf("┌ ");
-        taskPrinter(task_array, i);
-      } else if (i + 1 == task_array_size) {
-        // last element
-        printf("└ ");
-        taskPrinter(task_array, i);
-      } else {
-        // elements in between
-        printf("├ ");
-        taskPrinter(task_array, i);
+    if (!task_array_size) {
+      fputs("no tasks to print!\n", stdout);
+    } else if (task_array_size == 1) {
+      printf("- ");
+      taskPrinter(task_array, 0);
+    } else {
+      for (int i = 0; i < task_array_size; i++) {
+        if (!i) {
+          // first element
+          printf("┌ ");
+          taskPrinter(task_array, i);
+        } else if (i + 1 == task_array_size) {
+          // last element
+          printf("└ ");
+          taskPrinter(task_array, i);
+        } else {
+          // elements in between
+          printf("├ ");
+          taskPrinter(task_array, i);
+        }
       }
     }
   } else {
@@ -172,7 +179,6 @@ int printTasks(Task_t *task_array, int task_array_size, char *category) {
 int addTask(Task_t **task_array, int *task_array_size, char *task_name,
             char *category, priority_t prio, unsigned int done) {
   // expand mem
-  printf("mallocsize: %d\n", (*task_array_size + 1));
   (*task_array) =
       (Task_t *)realloc((*task_array), (*task_array_size + 1) * sizeof(Task_t));
   // update array size
@@ -193,7 +199,7 @@ int addTask(Task_t **task_array, int *task_array_size, char *task_name,
   return 0;
 }
 
-//remove task from current tasklist
+// remove task from current tasklist
 int removeTask(Task_t **task_array, int *task_array_size, char *index) {
   // check if index is valid
   int iIndex = atoi(index);
