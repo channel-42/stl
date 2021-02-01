@@ -31,18 +31,26 @@ Task_t *loadDB(FILE *dbptr, int *task_array_size) {
     RST;
 #endif
     // main read loop
-    while (fscanf(dbptr, "%[^:]:%[^:]:%d:%u\n", temp_task_name, temp_category,
+    while (fscanf(dbptr, "%[^:]:%[^:]:%d:%u\n ", temp_task_name, temp_category,
                   &temp_priority, &temp_done) != EOF) {
       // expand mem
       task_array = (Task_t *)realloc(task_array, (cnt + 1) * sizeof(Task_t));
+      //ensure memmory is empty
+      memset(task_array[cnt].task_name, 0, strlen(task_array[cnt].task_name));
+      memset(task_array[cnt].category, 0, strlen(task_array[cnt].category));
       // ensure strings are null terminated
-      strcat(temp_task_name, "\0");
-      strcat(temp_category, "\0");
-      // copy data into mem
-      strcat(task_array[cnt].task_name, temp_task_name);
-      strcat(task_array[cnt].category, temp_category);
+      temp_task_name[254] = '\0';
+      temp_category[254] = '\0';
+      task_array[cnt].task_name[254] = '\0';
+      task_array[cnt].category[254] = '\0';
+      //copy data to struct
+      strncat(task_array[cnt].task_name, temp_task_name,
+              sizeof(temp_task_name) + 1);
+      strncat(task_array[cnt].category, temp_category,
+              sizeof(temp_task_name) + 1);
       task_array[cnt].prio = temp_priority;
       task_array[cnt].done = temp_done;
+
 #ifdef DEBUG
       RED;
       printf("TASK FOUND: %s:%s:%d:%d\n", TASK(cnt).task_name,
@@ -178,20 +186,31 @@ int printTasks(Task_t *task_array, int task_array_size, char *category) {
 // adds a task to the current tasklist
 int addTask(Task_t **task_array, int *task_array_size, char *task_name,
             char *category, priority_t prio, unsigned int done) {
-  // expand mem
-  (*task_array) =
-      (Task_t *)realloc((*task_array), (*task_array_size + 1) * sizeof(Task_t));
   // update array size
   (*task_array_size)++;
+  // expand mem
+  (*task_array) =
+      (Task_t *)realloc((*task_array), ((*task_array_size) * sizeof(Task_t)));
   // add new task
-  int i = *task_array_size - 1;
-  strcat((*task_array)[i].task_name, task_name);
-  strcat((*task_array)[i].category, category);
+  int i = (*task_array_size) - 1;
+  
+  //ensure that memmory is empty
+  memset((*task_array)[i].task_name, 0, strlen((*task_array)[i].task_name));
+  memset((*task_array)[i].category, 0, strlen((*task_array)[i].category));
+  //ensure strings null terminated
+  task_name[254] = '\0';
+  category[254] = '\0';
+  (*task_array)[i].task_name[254] = '\0';
+  (*task_array)[i].category[254] = '\0';
+  //copy data to array
+  strncat((*task_array)[i].task_name, task_name, sizeof(task_name) + 1);
+  strncat((*task_array)[i].category, category, sizeof(task_name) + 1);
   (*task_array)[i].prio = prio;
   (*task_array)[i].done = done;
 
 #ifdef DEBUG
-  printf("ADDING: %s:%s:%d:%d\n", (*task_array)[i].task_name,
+  printf("ADDING:READ: %s:%s:%d:%d\n", task_name, category, prio, done);
+  printf("ADDING:ARRAY: %s:%s:%d:%d\n", (*task_array)[i].task_name,
          (*task_array)[i].category, (*task_array)[i].prio,
          (*task_array)[i].done);
 #endif

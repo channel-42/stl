@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// #define DEBUG
+//#define DEBUG
 
 #include "../include/stl.h"
 
@@ -45,6 +45,9 @@ int main(int argc, char *argv[]) {
         fputs("priority (0-2): ", stdout);
         scanf("%d", &temp_prio);
         // add task
+#ifdef DEBUG
+        printf("MAIN:%s:%s:%d:0\n", temp_name, temp_category, temp_prio);
+#endif
         addTask(&task_array, &task_array_size, temp_name, temp_category,
                 temp_prio, 0);
         fputs("\nnew task added!\n", stdout);
@@ -61,9 +64,9 @@ int main(int argc, char *argv[]) {
       case 'a':
         break;
       case 'r':
-        if(!removeTask(&task_array, &task_array_size, argv[2])){
+        if (!removeTask(&task_array, &task_array_size, argv[2])) {
           fputs("\ntask removed!\n", stdout);
-        }else{
+        } else {
           fputs("\ninvalid index!\n", stdout);
         }
         break;
