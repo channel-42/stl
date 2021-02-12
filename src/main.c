@@ -8,7 +8,6 @@
 #include "../include/stl.h"
 
 int main(int argc, char *argv[]) {
-  // STUFF FOR TESTING, NOT FINAL
   int task_array_size = 0;
   char *path = getDBPath();
 
@@ -31,6 +30,7 @@ int main(int argc, char *argv[]) {
       char temp_category[255];
       int temp_prio;
       char command = *(argv[1] + 1);
+      char** category_list; 
       switch (command) {
       // list command all cats
       case 'l':
@@ -52,6 +52,13 @@ int main(int argc, char *argv[]) {
                 temp_prio, 0);
         fputs("\nnew task added!\n", stdout);
         break;
+        case 'r':
+          fputs("no task number specified!\n", stdout);
+          break;
+        case 'g':
+          //broken !!
+          //printGroups(task_array, task_array_size);
+          break;
       }
     } else if (argc == 3) {
       char command = *(argv[1] + 1);

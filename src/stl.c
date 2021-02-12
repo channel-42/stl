@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 
 char *getDBPath(void) { return strcat(getenv("HOME"), "/.cache/tasks.db"); }
 
@@ -35,7 +35,7 @@ Task_t *loadDB(FILE *dbptr, int *task_array_size) {
                   &temp_priority, &temp_done) != EOF) {
       // expand mem
       task_array = (Task_t *)realloc(task_array, (cnt + 1) * sizeof(Task_t));
-      //ensure memmory is empty
+      // ensure memmory is empty
       memset(task_array[cnt].task_name, 0, strlen(task_array[cnt].task_name));
       memset(task_array[cnt].category, 0, strlen(task_array[cnt].category));
       // ensure strings are null terminated
@@ -43,7 +43,7 @@ Task_t *loadDB(FILE *dbptr, int *task_array_size) {
       temp_category[254] = '\0';
       task_array[cnt].task_name[254] = '\0';
       task_array[cnt].category[254] = '\0';
-      //copy data to struct
+      // copy data to struct
       strncat(task_array[cnt].task_name, temp_task_name,
               sizeof(temp_task_name) + 1);
       strncat(task_array[cnt].category, temp_category,
@@ -193,16 +193,16 @@ int addTask(Task_t **task_array, int *task_array_size, char *task_name,
       (Task_t *)realloc((*task_array), ((*task_array_size) * sizeof(Task_t)));
   // add new task
   int i = (*task_array_size) - 1;
-  
-  //ensure that memmory is empty
+
+  // ensure that memmory is empty
   memset((*task_array)[i].task_name, 0, strlen((*task_array)[i].task_name));
   memset((*task_array)[i].category, 0, strlen((*task_array)[i].category));
-  //ensure strings null terminated
+  // ensure strings null terminated
   task_name[254] = '\0';
   category[254] = '\0';
   (*task_array)[i].task_name[254] = '\0';
   (*task_array)[i].category[254] = '\0';
-  //copy data to array
+  // copy data to array
   strncat((*task_array)[i].task_name, task_name, sizeof(task_name) + 1);
   strncat((*task_array)[i].category, category, sizeof(task_name) + 1);
   (*task_array)[i].prio = prio;
@@ -221,7 +221,7 @@ int addTask(Task_t **task_array, int *task_array_size, char *task_name,
 // remove task from current tasklist
 int removeTask(Task_t **task_array, int *task_array_size, char *index) {
   // check if index is valid
-  int iIndex = atoi(index);
+  unsigned int iIndex = atoi(index);
 #ifdef DEBUG
   printf("%s:%d\n", index, iIndex);
 #endif
@@ -241,4 +241,51 @@ int removeTask(Task_t **task_array, int *task_array_size, char *index) {
     (*task_array_size)--;
     return 0;
   }
+}
+
+int checkCat(char **cat_list, unsigned int list_size, char *cat_check) {
+  if (!list_size) {
+    return 0;
+  } else {
+    for (int i = 0; i < list_size; i++) {
+      printf("%d:%s\n", i, *(cat_list + i));
+      if (!strcmp(*(cat_list + i), cat_check)) {
+        return 0;
+      } else {
+        continue;
+      }
+    }
+    return 1;
+  }
+}
+
+int printGroups(Task_t *task_array, int task_array_size) {
+  char **category_list = (char **)calloc(1, sizeof(char *));
+  *category_list = (char *)calloc(1, sizeof(char));
+  unsigned int category_count = 0;
+  for (int i = 0; i < task_array_size; i++) {
+    printf("cat: %s\n", task_array[i].category);
+    if (!checkCat(category_list, category_count, task_array[i].category)) {
+      printf("UNIQUE!!\n");
+      category_count++;
+      // this is a mess and doesnt work
+      category_list =
+          (char **)realloc(category_list, category_count * sizeof(char *));
+      *(category_list + (category_count - 1)) =
+          (char *)realloc(*(category_list + (category_count - 1)),
+                          strlen(task_array[i].category) + 1);
+      strncpy(category_list[category_count - 1], task_array[i].category,
+              sizeof(task_array[i].category));
+    } else {
+      continue;
+    }
+  }
+#ifdef DEBUG
+  printf("unique categories: %d\n", category_count);
+  for (int i = 0; i < category_count; i++) {
+    printf("%s\n", category_list[i]);
+  }
+#endif
+
+  return 0;
 }
