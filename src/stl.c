@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 
 char *getDBPath(void) { return strcat(getenv("HOME"), "/.cache/tasks.db"); }
 
@@ -96,22 +96,22 @@ void taskPrinter(Task_t *task_array, int i) {
   switch (TASK(i).prio) {
   case 0:
     WHITE;
-    printf("%d: %s\n", i + 1, TASK(i).task_name);
+    fprintf(stdout, "%d: %s\n", i + 1, TASK(i).task_name);
     RST;
     break;
   case 1:
     GREEN;
-    printf("%d: %s\n", i + 1, TASK(i).task_name);
+    fprintf(stdout, "%d: %s\n", i + 1, TASK(i).task_name);
     RST;
     break;
   case 2:
     RED;
-    printf("%d: %s\n", i + 1, TASK(i).task_name);
+    fprintf(stdout, "%d: %s\n", i + 1, TASK(i).task_name);
     RST;
     break;
   default:
     WHITE;
-    printf("%d: %s\n", i + 1, TASK(i).task_name);
+    fprintf(stdout, "%d: %s\n", i + 1, TASK(i).task_name);
     RST;
     break;
   }
@@ -203,8 +203,8 @@ int addTask(Task_t **task_array, int *task_array_size, char *task_name,
   (*task_array)[i].task_name[254] = '\0';
   (*task_array)[i].category[254] = '\0';
   // copy data to array
-  strncat((*task_array)[i].task_name, task_name, sizeof(task_name) + 1);
-  strncat((*task_array)[i].category, category, sizeof(task_name) + 1);
+  strncat((*task_array)[i].task_name, task_name, strlen(task_name) + 1);
+  strncat((*task_array)[i].category, category, strlen(task_name) + 1);
   (*task_array)[i].prio = prio;
   (*task_array)[i].done = done;
 
@@ -219,17 +219,15 @@ int addTask(Task_t **task_array, int *task_array_size, char *task_name,
 }
 
 // remove task from current tasklist
-int removeTask(Task_t **task_array, int *task_array_size, char *index) {
-  // check if index is valid
-  unsigned int iIndex = atoi(index);
+int removeTask(Task_t **task_array, int *task_array_size, int index) {
 #ifdef DEBUG
-  printf("%s:%d\n", index, iIndex);
+  printf("index: %d\n", index);
 #endif
-  if (iIndex - 1 > *task_array_size || iIndex < 1) {
+  if (index - 1 > *task_array_size || index < 1) {
     return 1;
   } else {
     // move all following elements one index down
-    for (int i = iIndex - 1; i < (*task_array_size) - 1; i++) {
+    for (int i = index - 1; i < (*task_array_size) - 1; i++) {
       strcpy((*task_array)[i].task_name, (*task_array)[i + 1].task_name);
       strcpy((*task_array)[i].category, (*task_array)[i + 1].category);
       (*task_array)[i].prio = (*task_array)[i + 1].prio;
@@ -243,39 +241,46 @@ int removeTask(Task_t **task_array, int *task_array_size, char *index) {
   }
 }
 
-int checkCat(char **cat_list, unsigned int list_size, char *cat_check) {
-  if (!list_size) {
-    return 0;
+// check if a query is inside a string array
+int checkCat(char **cat_list, unsigned int *list_size, char *cat_check) {
+  // null-sized list -> has to be unique
+  if (!*list_size) {
+    (*list_size)++;
+    return 1;
   } else {
-    for (int i = 0; i < list_size; i++) {
-      printf("%d:%s\n", i, *(cat_list + i));
-      if (!strcmp(*(cat_list + i), cat_check)) {
+    // search through provided list
+    for (int i = 0; i < *list_size; i++) {
+      // check if query in list
+      if (!strcmp(cat_list[i], cat_check)) {
         return 0;
       } else {
         continue;
       }
     }
+    (*list_size)++;
     return 1;
   }
 }
 
+// print all groups separately
 int printGroups(Task_t *task_array, int task_array_size) {
+  // category list
   char **category_list = (char **)calloc(1, sizeof(char *));
-  *category_list = (char *)calloc(1, sizeof(char));
+  category_list[0] = calloc(1, 255 * sizeof(char));
   unsigned int category_count = 0;
+  // main search algo
   for (int i = 0; i < task_array_size; i++) {
-    printf("cat: %s\n", task_array[i].category);
-    if (!checkCat(category_list, category_count, task_array[i].category)) {
-      printf("UNIQUE!!\n");
-      category_count++;
-      // this is a mess and doesnt work
+    // check for unique cat
+    if (checkCat(category_list, &category_count, task_array[i].category)) {
+      // realloc memmory
       category_list =
           (char **)realloc(category_list, category_count * sizeof(char *));
-      *(category_list + (category_count - 1)) =
-          (char *)realloc(*(category_list + (category_count - 1)),
-                          strlen(task_array[i].category) + 1);
+      category_list[category_count - 1] =
+          (char *)realloc(category_list[category_count - 1],
+                          (strlen(task_array[i].category) + 1) * sizeof(char));
+      // copy new unique cat to array
       strncpy(category_list[category_count - 1], task_array[i].category,
-              sizeof(task_array[i].category));
+              strlen(task_array[i].category));
     } else {
       continue;
     }
@@ -287,5 +292,23 @@ int printGroups(Task_t *task_array, int task_array_size) {
   }
 #endif
 
+  for (int i = 0; i < category_count; i++) {
+    FAT;
+    fprintf(stdout,"%s:\n", category_list[i]);
+    RST;
+    for (int j = 0; j < task_array_size; j++) {
+      if (!strncmp(category_list[i], task_array[j].category, strlen(task_array[j].category))) {
+        taskPrinter(task_array, j);
+      } else {
+        continue;
+      }
+    }
+    printf("\n");
+  }
+  // free pointers
+  for (int i = 0; i < category_count; i++) {
+    free(category_list[i]);
+  }
+  free(category_list);
   return 0;
 }

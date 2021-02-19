@@ -33,7 +33,7 @@ int printTasks(Task_t *task_array, int task_array_size, char *category);
 int addTask(Task_t **task_array, int *task_array_size, char *task_name,
             char *category, priority_t pro, unsigned int done);
 void taskPrinter(Task_t *task_array, int i);
-int removeTask(Task_t **task_array, int *task_array_size, char* index);
-int checkCat(char**cat_list, unsigned int list_size, char *cat_check);
+int removeTask(Task_t **task_array, int *task_array_size, int index);
+int checkCat(char**cat_list, unsigned int *list_size, char *cat_check);
 int printGroups(Task_t *task_array, int task_array_size);
 #endif

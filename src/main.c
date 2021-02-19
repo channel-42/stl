@@ -2,10 +2,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 //#define DEBUG
 
 #include "../include/stl.h"
+
+const char *USAGE = "\
+usage: stl [OPTION] [VALUE] ...\n\
+try 'stl -h' for more information.\n\
+";
 
 int main(int argc, char *argv[]) {
   int task_array_size = 0;
@@ -19,29 +25,29 @@ int main(int argc, char *argv[]) {
   }
   RST;
 #endif
+  // open db
   FILE *db = fopen(path, "r");
-
   if (db != NULL) {
-    // open and read
+    // create and load task array and close db
     Task_t *task_array = loadDB(db, &task_array_size);
     fclose(db);
-    if (argc == 2) {
-      char temp_name[255];
-      char temp_category[255];
-      int temp_prio;
-      char command = *(argv[1] + 1);
-      char** category_list; 
-      switch (command) {
-      // list command all cats
+    char temp_name[255];
+    char temp_category[255];
+    int temp_prio;
+
+    // main ui loop
+    extern char *optarg;
+    int opt;
+    while ((opt = getopt(argc, argv, ":al:r:g")) != -1) {
+      switch (opt) {
       case 'l':
-        printTasks(task_array, task_array_size, "");
+        printTasks(task_array, task_array_size, optarg);
         break;
-      // add command
       case 'a':
         fputs("task name: ", stdout);
-        scanf("%s", temp_name);
+        scanf(" %[^\n]", temp_name);
         fputs("category: ", stdout);
-        scanf("%s", temp_category);
+        scanf(" %[^\n]", temp_category);
         fputs("priority (0-2): ", stdout);
         scanf("%d", &temp_prio);
         // add task
@@ -52,30 +58,32 @@ int main(int argc, char *argv[]) {
                 temp_prio, 0);
         fputs("\nnew task added!\n", stdout);
         break;
-        case 'r':
-          fputs("no task number specified!\n", stdout);
-          break;
-        case 'g':
-          //broken !!
-          //printGroups(task_array, task_array_size);
-          break;
-      }
-    } else if (argc == 3) {
-      char command = *(argv[1] + 1);
-      switch (command) {
-      // list command for specific category
-      case 'l':
-        printTasks(task_array, task_array_size, argv[2]);
-        break;
-      // add task command
-      case 'a':
-        break;
       case 'r':
-        if (!removeTask(&task_array, &task_array_size, argv[2])) {
+        if (!removeTask(&task_array, &task_array_size, atoi(optarg))) {
           fputs("\ntask removed!\n", stdout);
         } else {
           fputs("\ninvalid index!\n", stdout);
         }
+        break;
+      case 'g':
+        printGroups(task_array, task_array_size);
+        break;
+      // catch optional args
+      case ':':
+        switch (optopt) {
+        case 'l':
+          printTasks(task_array, task_array_size, "");
+          break;
+        default:
+          fprintf(stderr, "option -%c is missing a required argument\n",
+                  optopt);
+          exit(EXIT_FAILURE);
+          break;
+        }
+        break;
+      default:
+        fprintf(stderr, "%s", USAGE);
+        exit(EXIT_FAILURE);
         break;
       }
     }
