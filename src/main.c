@@ -13,6 +13,16 @@ usage: stl [OPTION] [VALUE] ...\n\
 try 'stl -h' for more information.\n\
 ";
 
+const char *HELP = "\
+usage: stl [OPTION] [VALUE] ...\n\
+Control a WLED host through the HTTP API.\n\n\
+  -h            display this help\n\
+  -l (GROUP)    list all tasks.\n\
+  -a            add a new task.\n\
+  -g            print sorted groups.\n\
+  -r NUM        remove task by index.\n\
+";
+
 int main(int argc, char *argv[]) {
   int task_array_size = 0;
   char *path = getDBPath();
@@ -38,17 +48,20 @@ int main(int argc, char *argv[]) {
     // main ui loop
     extern char *optarg;
     int opt;
-    while ((opt = getopt(argc, argv, ":al:r:g")) != -1) {
+    while ((opt = getopt(argc, argv, ":al:r:gh")) != -1) {
       switch (opt) {
+      case 'h':
+        fprintf(stdout, "%s", HELP);
+        break;
       case 'l':
         printTasks(task_array, task_array_size, optarg);
         break;
       case 'a':
-        fputs("task name: ", stdout);
+        fprintf(stdout, "task name: ");
         scanf(" %[^\n]", temp_name);
-        fputs("category: ", stdout);
+        fprintf(stdout, "category: ");
         scanf(" %[^\n]", temp_category);
-        fputs("priority (0-2): ", stdout);
+        fprintf(stdout, "priority (0-2): ");
         scanf("%d", &temp_prio);
         // add task
 #ifdef DEBUG
@@ -56,13 +69,13 @@ int main(int argc, char *argv[]) {
 #endif
         addTask(&task_array, &task_array_size, temp_name, temp_category,
                 temp_prio, 0);
-        fputs("\nnew task added!\n", stdout);
+        fprintf(stdout, "\nnew task added!\n");
         break;
       case 'r':
         if (!removeTask(&task_array, &task_array_size, atoi(optarg))) {
-          fputs("\ntask removed!\n", stdout);
+          fprintf(stdout, "\ntask removed!\n");
         } else {
-          fputs("\ninvalid index!\n", stdout);
+          fprintf(stdout, "\ninvalid index!\n");
         }
         break;
       case 'g':
@@ -94,7 +107,7 @@ int main(int argc, char *argv[]) {
     fclose(db);
     // free(task_array);
   } else {
-    printf("Error! Check if DB-File exists\n");
+    fprintf(stderr, "Error! Check if DB-File exists\n");
   }
   return 0;
 }
